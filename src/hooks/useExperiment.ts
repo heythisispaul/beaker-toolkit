@@ -6,6 +6,7 @@ export interface ExperimentEvent {
   type: string;
   experiment: string;
   variant: string;
+  timeInMsSinceMount: number;
 }
 
 const useExperiment = (experimentName: string, variantOverride?: string) => {
@@ -13,13 +14,24 @@ const useExperiment = (experimentName: string, variantOverride?: string) => {
     hasConsent,
     experimentCache,
     variantErrorHandler,
+    setExperimentMountTime,
+    getExperimentMountTime,
     setExperimentVariant,
     eventEmitterBinder,
+    variantIssueUrlHandler,
+    fetchClient,
   } = useExperimentContext();
   
   const variant = variantOverride || experimentCache[experimentName];
 
   const [isLoading, setIsLoading] = useState<boolean>(!Boolean(variant));
+
+  useEffect(() => {
+    if (variant && !getExperimentMountTime(experimentName)) {
+      setExperimentMountTime(experimentName);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant]);
 
   useEffect(() => {
     if (variantOverride && !experimentCache[experimentName]) {
@@ -30,7 +42,9 @@ const useExperiment = (experimentName: string, variantOverride?: string) => {
   useEffect(() => {
     const fetchVariant = async () => {
       try {
-        const response = await fetch(`/the-url/${experimentName}`);
+        const fetcher = fetchClient ? fetchClient : fetch;
+        const url = variantIssueUrlHandler ? variantIssueUrlHandler(experimentName) : `/the-url/${experimentName}`;
+        const response = await fetcher(url);
         const variantData = await response.json();
         setExperimentVariant(experimentName, variantData);
       } catch (error) {
@@ -45,7 +59,7 @@ const useExperiment = (experimentName: string, variantOverride?: string) => {
     if (!variant) {
       fetchVariant();
     }
-  }, [variant, experimentName, setExperimentVariant, variantErrorHandler]);
+  }, [variant, experimentName, setExperimentVariant, variantErrorHandler, fetchClient, variantIssueUrlHandler]);
 
   const emitExperimentEvent = eventEmitterBinder(experimentName, variant);
 

@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from 'mongoose';
 
 export interface Variant {
   name: string;
@@ -28,6 +28,15 @@ export const ExperimentSchema = new Schema<Experiment>({
   start: { type: Date, default: new Date() },
   end: { type: Date },
   maxUnique: { type: Number, default: 5000 },
+});
+
+ExperimentSchema.pre('save', async function() {
+  // @ts-ignore
+  const currentExperiment: Experiment = this as unknown as Experiment;
+  const variantWeightTotal = currentExperiment.variants.reduce(((total, { weight }) => total + weight), 0);
+  if (variantWeightTotal !== 100) {
+    throw new Error('The combined weight of all variants must be 100');
+  }
 });
 
 const ExperimentModel = model<Experiment>('Beaker-Experiment', ExperimentSchema);

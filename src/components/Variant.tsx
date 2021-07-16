@@ -27,7 +27,7 @@ export const Variant: FC<VariantProps> = ({
 
   useEffect(() => {
     if (!disableOnMountImpression) {
-      emitExperimentEvent('IMPRESSED');
+      emitExperimentEvent('ISSUED');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -36,7 +36,7 @@ export const Variant: FC<VariantProps> = ({
 
   useEffect(() => {
     if (inView && !hasFiredViewImpression.current && !disableOnViewImpression) {
-      emitExperimentEvent('VIEWED');
+      emitExperimentEvent('IMPRESSED');
       hasFiredViewImpression.current = true;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
